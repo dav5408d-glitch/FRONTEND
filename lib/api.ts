@@ -1,54 +1,56 @@
 // frontend/lib/api.ts
 import { authService } from './auth';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
-if (!API_URL) {
-  console.warn('⚠️ API_URL not configured. Using localhost:3002');
+export interface ChatResponse {
+  response: string;
+  aiUsed: string;
+  providerKey: string;
+  costUSD: number;
+  chargedUSD: number;
+  tokensUsed: number;
+  mode: string;
+  timestamp?: string;
+  error?: string;
 }
 
-async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const token = authService.getToken();
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  } as Record<string, string>;
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
+// API simplifiée - directement vers Ollama
+export async function sendMessage(
+  message: string,
+  history: ChatMessage[] = []
+): Promise<ChatResponse> {
   try {
-    const response = await fetch(`${API_URL}${url}`, {
-      ...options,
-      headers,
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        history
+      }),
     });
 
-    // Handle token expiration
-    if (response.status === 401) {
-      authService.logout();
-      throw new Error('Session expired. Please login again.');
-    }
-
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-      throw new Error(error.error || `HTTP ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
-  } catch (error: any) {
+    const data = await response.json();
+    return data;
+  } catch (error) {
     console.error('API Error:', error);
     throw error;
   }
 }
 
-export async function sendMessage(message: string, conversationId?: string) {
-  return fetchWithAuth('/api/chat', {
-    method: 'POST',
-    body: JSON.stringify({ message, conversationId }),
-  });
-}
+// Health check de l'API
 
 export async function getUsage() {
   try {

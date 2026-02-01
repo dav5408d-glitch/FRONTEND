@@ -120,14 +120,12 @@ export default function Navigation({ transparent = false, currentPage }: Navigat
                   >
                     🎯 Mode Invité
                   </motion.button>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link
-                      href="/auth/login"
-                      className="px-6 py-2 text-sm bg-linear-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold hover:from-blue-400 hover:to-purple-400 transition shadow-lg"
-                    >
-                      Connexion
-                    </Link>
-                  </motion.div>
+                  <Link
+                    href="/auth/login"
+                    className="px-6 py-2 text-sm bg-linear-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold hover:from-blue-400 hover:to-purple-400 transition shadow-lg"
+                  >
+                    Connexion
+                  </Link>
                 </div>
               )}
             </div>
