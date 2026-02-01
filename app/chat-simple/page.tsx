@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { sendMessage, ChatMessage, storage } from '../../lib/api-simple';
+import { sendMessage, ChatMessage, storage } from '../../lib/api';
 import AnimatedCard from '../../components/AnimatedCard';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
