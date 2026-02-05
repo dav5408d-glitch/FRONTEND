@@ -29,11 +29,11 @@ export default function ChatWithWebLLM() {
     scrollToBottom();
   }, [messages, currentResponse]);
 
-  // Force l'utilisation d'Ollama backend au lieu de WebLLM
+  // Configuration pour Mixtral 7B local
   useEffect(() => {
-    console.log('🔧 Forcing Ollama backend mode (WebLLM disabled)');
+    console.log('🤖 Configuration: Mixtral 7B Local Mode');
     setIsWebGPUAvailable(false);
-    setEngineReady(false);
+    setEngineReady(true); // Backend est prêt
   }, []);
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -162,7 +162,7 @@ export default function ChatWithWebLLM() {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
               <span className={`w-2 h-2 rounded-full ${engineReady ? 'bg-[#30d158] shadow-[0_0_8px_#30d158]' : 'bg-yellow-500 animate-pulse'}`}></span>
               <span className="text-xs font-medium text-gray-300">
-                {engineReady ? (isWebGPUAvailable ? 'Mixtral 7B (Local)' : 'Mixtral 8x7B (Ollama)') : 'Connexion au backend...'}
+                {engineReady ? 'Mixtral 7B (Local)' : 'Connexion au backend...'}
               </span>
             </div>
           </div>
