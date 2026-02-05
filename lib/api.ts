@@ -1,108 +1,117 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+// frontend/lib/api.ts
+import { authService } from './auth';
 
-export interface ChatResponse {
-  response: string;
-  aiUsed: string;
-  providerKey: string;
-  costUSD: number;
-  chargedUSD: number;
-  tokensUsed: number;
-  mode: string;
-  timestamp?: string;
-  error?: string;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+
+if (!API_URL) {
+  console.warn('⚠️ API_URL not configured. Using localhost:3002');
 }
 
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp?: string;
-}
+async function fetchWithAuth(url: string, options: RequestInit = {}) {
+  const token = authService.getToken();
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  } as Record<string, string>;
 
-// API simplifiée - directement vers Ollama
-export async function sendMessage(
-  message: string,
-  history: ChatMessage[] = []
-): Promise<ChatResponse> {
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   try {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message,
-        history
-      }),
+    const response = await fetch(`${API_URL}${url}`, {
+      ...options,
+      headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Handle token expiration
+    if (response.status === 401) {
+      authService.logout();
+      throw new Error('Session expired. Please login again.');
     }
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  } catch (error: any) {
     console.error('API Error:', error);
     throw error;
   }
 }
 
-// Health check de l'API
-export async function checkHealth() {
+export async function sendMessage(message: string, conversationId?: string) {
+  return fetchWithAuth('/api/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message, conversationId }),
+  });
+}
+
+export async function getUsage() {
   try {
-    const response = await fetch('/api/chat');
-    if (response.ok) {
-      const data = await response.json();
-      return data;
-    }
-    return null;
-  } catch (error) {
-    console.error('Health check failed:', error);
-    return null;
+    return await fetchWithAuth('/api/auth/usage');
+  } catch {
+    return {
+      messages: { used: 0, limit: 100, remaining: 100, percentage: 0 },
+      images: { used: 0, limit: 0, remaining: 0, percentage: 0 },
+      plan: 'FREE'
+    };
   }
 }
 
-// Sauvegarde locale des conversations
-export const storage = {
-  // Sauvegarder l'historique
-  saveHistory: (userId: string, history: ChatMessage[]) => {
-    if (typeof window !== 'undefined') {
-      const key = `synapse_history_${userId}`;
-      localStorage.setItem(key, JSON.stringify(history));
-    }
-  },
-
-  // Charger l'historique
-  loadHistory: (userId: string): ChatMessage[] => {
-    if (typeof window !== 'undefined') {
-      const key = `synapse_history_${userId}`;
-      const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : [];
-    }
+export async function getConversations() {
+  try {
+    return await fetchWithAuth('/api/auth/conversations');
+  } catch (error) {
+    console.error('Failed to fetch conversations:', error);
     return [];
-  },
-
-  // Effacer l'historique
-  clearHistory: (userId: string) => {
-    if (typeof window !== 'undefined') {
-      const key = `synapse_history_${userId}`;
-      localStorage.removeItem(key);
-    }
-  },
-
-  // Sauvegarder les préférences
-  savePreferences: (prefs: any) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('synapse_preferences', JSON.stringify(prefs));
-    }
-  },
-
-  // Charger les préférences
-  loadPreferences: () => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('synapse_preferences');
-      return saved ? JSON.parse(saved) : {};
-    }
-    return {};
   }
-};
+}
+
+export async function createConversation(title?: string) {
+  try {
+    return await fetchWithAuth('/api/auth/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ title })
+    });
+  } catch (error) {
+    console.error('Failed to create conversation:', error);
+    throw error;
+  }
+}
+
+export async function getConversation(id: string) {
+  try {
+    return await fetchWithAuth(`/api/auth/conversations/${id}`);
+  } catch (error) {
+    console.error('Failed to fetch conversation:', error);
+    throw error;
+  }
+}
+
+export async function deleteConversation(id: string) {
+  try {
+    return await fetchWithAuth(`/api/auth/conversations/${id}`, {
+      method: 'DELETE'
+    });
+  } catch (error) {
+    console.error('Failed to delete conversation:', error);
+    throw error;
+  }
+}
+
+export async function checkHealth() {
+  try {
+    const response = await fetch(`${API_URL}/api/health`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Backend health check failed:', error);
+    return null;
+  }
+}
