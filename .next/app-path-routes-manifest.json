@@ -1,0 +1,12 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/auth/login/page": "/auth/login",
+  "/auth/register/page": "/auth/register",
+  "/chat/page": "/chat",
+  "/checkout/success/page": "/checkout/success",
+  "/favicon.ico/route": "/favicon.ico",
+  "/page": "/",
+  "/pricing/page": "/pricing",
+  "/upgrade/page": "/upgrade"
+}
