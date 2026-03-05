@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIFT - Authentification</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #10a37f;
+            --secondary: #6366f1;
+            --accent: #f59e0b;
+            --background: #000000;
+            --surface: #111111;
+            --surface-light: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --border: #2a2a2a;
+            --error: #ef4444;
+            --success: #22c55e;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            position: relative;
+            display: inline-block;
+        }
+        .beta-badge {
+            position: absolute;
+            top: -8px;
+            right: -20px;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            color: white;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 15px rgba(16, 163, 127, 0.3);
+        }
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            animation: underlineSlide 2s ease-in-out infinite;
+        }
+        @keyframes underlineSlide { 0%, 100% { width: 0; left: 0; } 50% { width: 100%; } }
+        .logo-text {
+            display: inline-block;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            position: relative;
+            padding: 0.5rem 0;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-link:hover { color: var(--text-primary); }
+        .nav-link:hover::before { width: 100%; }
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--background) 0%, var(--surface) 100%);
+            position: relative;
+        }
+        .auth-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .auth-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--surface-light);
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 0.75rem;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .auth-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .form-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .form-subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 500; }
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+        }
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(16, 163, 127, 0.3); }
+        .hamburger-btn {
+            display: none;
+            flex-direction: column;
+            gap: 0.4rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .hamburger-btn span {
+            width: 25px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(10px, 10px);
+        }
+
+        .hamburger-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .mobile-menu a:hover {
+            background: rgba(16, 163, 127, 0.1);
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            header { position: relative; }
+            .hamburger-btn { display: flex; }
+            .nav-links { display: none !important; }
+            nav { flex-direction: column; padding: 1rem; }
+            main { margin-top: 0; padding: 1rem; }
+            .auth-container { max-width: 100%; padding: 1.5rem; }
+            h2 { font-size: 1.4rem; }
+            .form-group { margin-bottom: 1rem; }
+            input, textarea { padding: 0.75rem; font-size: 1rem; }
+            .btn { padding: 0.75rem; width: 100%; }
+        }
+        @media (max-width: 480px) {
+            nav { padding: 0.75rem; }
+            main { padding: 0.75rem; }
+            .auth-container { padding: 1rem; }
+            h2 { font-size: 1.2rem; }
+            input, textarea { padding: 0.6rem; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="home.html" class="logo">RIFT<span class="beta-badge">BETA</span></a>
+                <button class="hamburger-btn" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <ul class="nav-links">
+                <li><a href="chat.html" class="nav-link">Chat</a></li>
+                <li><a href="api.html" class="nav-link">API</a></li>
+                <li><a href="auth.html" class="nav-link">Auth</a></li>
+            </ul>
+        </nav>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="chat.html" onclick="closeMobileMenu()">Chat</a>
+            <a href="api.html" onclick="closeMobileMenu()">API</a>
+            <a href="auth.html" onclick="closeMobileMenu()">Auth</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="auth-container">
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Connexion</button>
+                <button class="auth-tab" onclick="switchTab('register')">Inscription</button>
+            </div>
+
+            <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+                <h2 class="form-title">Bienvenue</h2>
+                <p class="form-subtitle">Connectez-vous à votre compte RIFT</p>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="votre@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mot de passe</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn">Se connecter</button>
+                <p style="text-align: center; color: var(--text-secondary); margin-top: 1rem;">
+                    Pas encore de compte ? <a href="#" onclick="switchTab('register')" style="color: var(--primary);">S'inscrire</a>
+                </p>
+            </form>
+
+            <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+                <h2 class="form-title">Créer un compte</h2>
+                <p class="form-subtitle">Rejoignez RIFT dès aujourd'hui</p>
+
+                <div class="form-group">
+                    <label class="form-label">Nom complet</label>
+                    <input type="text" class="form-input" id="registerName" placeholder="Jean Dupont" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="registerEmail" placeholder="votre@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mot de passe</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirmer le mot de passe</label>
+                    <input type="password" class="form-input" id="registerConfirmPassword" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn">S'inscrire</button>
+                <p style="text-align: center; color: var(--text-secondary); margin-top: 1rem;">
+                    Déjà un compte ? <a href="#" onclick="switchTab('login')" style="color: var(--primary);">Se connecter</a>
+                </p>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.auth-tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            document.getElementById(tab + 'Form').classList.add('active');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            localStorage.setItem('rift_user', JSON.stringify({ email }));
+            alert('Bienvenue ' + email);
+            window.location.href = 'chat.html';
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+            if (password !== confirmPassword) {
+                alert('Les mots de passe ne correspondent pas');
+                return;
+            }
+
+            localStorage.setItem('rift_user', JSON.stringify({ email }));
+            alert('Compte créé avec succès !');
+            window.location.href = 'chat.html';
+        }
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                const href = link.getAttribute('href');
+                if (href && href.endsWith('.html')) {
+                    window.location.href = href;
+                }
+            });
+        });
+
+        function toggleMobileMenu() {
+            const btn = document.querySelector('.hamburger-btn');
+            const menu = document.getElementById('mobileMenu');
+            btn.classList.toggle('active');
+            menu.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            const btn = document.querySelector('.hamburger-btn');
+            const menu = document.getElementById('mobileMenu');
+            btn.classList.remove('active');
+            menu.classList.remove('active');
+        }
+    </script>
+</body>
+</html>

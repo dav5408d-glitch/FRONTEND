@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIFT - Routeur IA Intelligent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10a37f;
+            --secondary: #3b82f6;
+            --accent: #8b5cf6;
+            --background: #0a0a0a;
+            --surface: #1a1a1a;
+            --surface-light: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border: #333333;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header morphing - vraiment pas besoin de scroll listener, mais c'est beau */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        header.scrolled {
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(30px) saturate(200%);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+            position: relative;
+            display: inline-block;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+
+        .beta-badge {
+            position: absolute;
+            top: -8px;
+            right: -20px;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            color: white;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 15px rgba(16, 163, 127, 0.3);
+        }
+
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            animation: underlineSlide 2s ease-in-out infinite;
+        }
+
+        @keyframes underlineSlide {
+            0%, 100% { width: 0; left: 0; }
+            50% { width: 100%; }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            position: relative;
+            padding: 0.5rem 0;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .nav-link:hover::before {
+            width: 100%;
+        }
+
+        /* Hero section - oui les particules c'était une idée de PM mais ça marche */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(ellipse at center, rgba(16, 163, 127, 0.1) 0%, transparent 50%);
+            padding-top: 100px;
+        }
+
+        .hero-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleFloat 15s infinite linear;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(80vh) translateX(10px) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(10vh) translateX(-10px) scale(1);
+            }
+            100% {
+                transform: translateY(-10vh) translateX(0) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-title {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .hero-features {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hero-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.25rem 1.75rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+        }
+
+        .hero-feature:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(16, 163, 127, 0.25);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1.3s forwards;
+        }
+
+        .btn {
+            padding: 1.2rem 2.5rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 6px 20px rgba(16, 163, 127, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(16, 163, 127, 0.35);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            color: white;
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .features {
+            padding: 6rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 4rem;
+        }
+
+        /* Router IA Styles - le vrai code intéressant est en backend. ici c'est juste du style */
+        .router-workflow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+
+        .router-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 280px;
+            position: relative;
+        }
+
+        .step-number {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 12px 35px rgba(16, 163, 127, 0.25);
+        }
+
+        .step-content h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .ai-providers {
+            margin: 3rem 0;
+        }
+
+        .provider-card {
+            background: linear-gradient(145deg, var(--surface), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.75rem;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .provider-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(16, 163, 127, 0.15);
+            border-color: rgba(16, 163, 127, 0.3);
+            background: linear-gradient(145deg, var(--surface), rgba(16, 163, 127, 0.05));
+        }
+
+        .provider-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .provider-card h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .provider-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Pricing Section - TODO: faire un comparateur meilleur (des vrais devs pas des IA) */
+        .pricing-section {
+            background: linear-gradient(180deg, transparent, rgba(16, 163, 127, 0.05));
+            padding: 6rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .pricing-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            /* hack: c'est un peu hacky mais ça marche bien */
+            transform: translateY(0);
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 50px rgba(16, 163, 127, 0.2);
+        }
+
+        .price-label {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .price-amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0.5rem 0;
+        }
+
+        .price-period {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .price-features {
+            list-style: none;
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .price-features li {
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .price-features li:before {
+            content: '→';
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .cta-pricing {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .cta-pricing:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 163, 127, 0.3);
+        }
+
+        /* API Documentation Preview */
+        .api-section {
+            padding: 6rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: radial-gradient(ellipse at bottom right, rgba(99, 102, 241, 0.1) 0%, transparent 60%);
+        }
+
+        .api-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            margin-top: 3rem;
+        }
+
+        .api-content h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .api-content p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .api-features-list {
+            list-style: none;
+            margin: 2rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .api-features-list li {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .api-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        .api-code-example {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--success);
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+
+        .api-link-btn {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.9rem 2rem;
+            background: var(--secondary);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .api-link-btn:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .api-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero {
+                padding: 3rem 1.5rem;
+            }
+        }
+
+        .hamburger-btn {
+            display: none;
+            flex-direction: column;
+            gap: 0.4rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .hamburger-btn span {
+            width: 25px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(10px, 10px);
+        }
+
+        .hamburger-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .mobile-menu a:hover {
+            background: rgba(16, 163, 127, 0.1);
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            header { position: relative; }
+            .hamburger-btn { display: flex; }
+            .nav-links { display: none !important; }
+            nav { flex-direction: column; padding: 1rem; }
+            main { margin-top: 0; padding: 1rem; }
+            .hero-title {
+                font-size: 1.8rem;
+            }
+            h2 {
+                font-size: 1.4rem;
+            }
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            .plan-card {
+                padding: 1.5rem;
+            }
+            section {
+                padding: 2rem 1rem;
+            }
+        }
+        @media (max-width: 480px) {
+            nav { padding: 0.75rem; }
+            main { padding: 0.75rem; }
+            .hero-title { font-size: 1.4rem; }
+            h2 { font-size: 1.2rem; }
+            section { padding: 1.5rem 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="home.html" class="logo">RIFT<span class="beta-badge">BETA</span></a>
+                <button class="hamburger-btn" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <ul class="nav-links" style="display: flex; gap: 2.5rem; list-style: none;">
+                <li><a href="chat.html" class="nav-link" style="color: var(--text-secondary); text-decoration: none; position: relative; padding: 0.5rem 0; transition: all 0.3s ease; font-weight: 500;">Chat</a></li>
+                <li><a href="api.html" class="nav-link" style="color: var(--text-secondary); text-decoration: none; position: relative; padding: 0.5rem 0; transition: all 0.3s ease; font-weight: 500;">API</a></li>
+                <li><a href="auth.html" class="nav-link" style="color: var(--text-secondary); text-decoration: none; position: relative; padding: 0.5rem 0; transition: all 0.3s ease; font-weight: 500;">Auth</a></li>
+                <li>
+                </li>
+            </ul>
+        </nav>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="chat.html" onclick="closeMobileMenu()">Chat</a>
+            <a href="api.html" onclick="closeMobileMenu()">API</a>
+            <a href="auth.html" onclick="closeMobileMenu()">Auth</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero-particles" id="heroParticles"></div>
+
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">RIFT</h1>
+                <p class="hero-subtitle">Le routeur IA intelligent qui unifie tous les services d'IA en un seul abonnement</p>
+                <div class="hero-features">
+                    <div class="hero-feature">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: inline-block; margin-right: 0.5rem; vertical-align: middle;"><path d="M19 21H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm-5.04 6.71l-2.75 3.54-2.96-2.36c-.5-.4-1.25-.4-1.75.1l-1.24 1.56c-.4.5-.4 1.24.1 1.74l4.5 3.6c.5.4 1.25.4 1.75-.1l5.27-6.64c.4-.5.4-1.24-.1-1.74l-1.24-1.56c-.5-.4-1.24-.4-1.74.1z"/></svg>
+                        <span>Accès à OpenAI, Claude, Gemini et plus</span>
+                    </div>
+                    <div class="hero-feature">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: inline-block; margin-right: 0.5rem; vertical-align: middle;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        <span>Routeur intelligent optimise chaque requête</span>
+                    </div>
+                    <div class="hero-feature">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: inline-block; margin-right: 0.5rem; vertical-align: middle;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+                        <span>Meilleure IA sélectionnée automatiquement</span>
+                    </div>
+                </div>
+                <div class="cta-buttons">
+                    <button class="btn btn-primary" onclick="window.location.href='chat.html'">
+                        Essayer gratuitement
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.location.href='api.html'">
+                        Documentation API
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <h2 class="section-title">Routeur IA Intelligent</h2>
+            <p class="section-subtitle">RIFT analyse automatiquement votre requête et la route vers la meilleure IA disponible</p>
+            
+            <div class="router-workflow">
+                <div class="router-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Analyse de la Requête</h3>
+                        <p>RIFT analyse le contexte, la complexité et le type de votre demande</p>
+                    </div>
+                </div>
+                
+                <div class="router-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Optimisation du Prompt</h3>
+                        <p>Le routeur améliore automatiquement votre prompt pour des résultats optimaux</p>
+                    </div>
+                </div>
+                
+                <div class="router-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Sélection de l'IA</h3>
+                        <p>RIFT choisit automatiquement la meilleure IA : OpenAI, Claude, Gemini, ou Ollama</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ai-providers">
+                <h3 style="text-align: center; margin-bottom: 2rem; color: var(--text-primary);">Fournisseurs IA Intégrés</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                    <div class="provider-card">
+                        <div class="provider-logo" style="background: linear-gradient(135deg, #10a37f, #1a7f64);">GPT</div>
+                        <h4>OpenAI GPT</h4>
+                        <p>ChatGPT, GPT-4, DALL-E</p>
+                    </div>
+                    <div class="provider-card">
+                        <div class="provider-logo" style="background: linear-gradient(135deg, #d97706, #f59e0b);">Claude</div>
+                        <h4>Anthropic Claude</h4>
+                        <p>Claude 3, Claude Instant</p>
+                    </div>
+                    <div class="provider-card">
+                        <div class="provider-logo" style="background: linear-gradient(135deg, #4285f4, #1a73e8);">Gemini</div>
+                        <h4>Google Gemini</h4>
+                        <p>Gemini Pro, Gemini Ultra</p>
+                    </div>
+                    <div class="provider-card">
+                        <div class="provider-logo" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">Ollama</div>
+                        <h4>Ollama Local</h4>
+                        <p>Mistral, Llama, etc.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tarifs section - on aime les devs qui lisent les commentaires -->
+        <section class="pricing-section">
+            <h2 class="section-title">Tarifs Simples et Transparents</h2>
+            <p class="section-subtitle">Pas de surprise. Pas de frais cachés. Juste du bon routage IA.</p>
+            
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <span class="price-label">Essai Gratuit</span>
+                    <div class="price-amount">Gratuit</div>
+                    <div class="price-period">Pour tester RIFT</div>
+                    <ul class="price-features">
+                        <li>100 requêtes/jour</li>
+                        <li>Accès à 2 modèles</li>
+                        <li>Chat seulement</li>
+                        <li>Support communautaire</li>
+                    </ul>
+                    <button class="cta-pricing" onclick="window.location.href='chat.html'">Commencer Gratuitement</button>
+                </div>
+
+                <div class="pricing-card" style="border-color: var(--primary); border-width: 2px;">
+                    <span class="price-label" style="background: var(--primary); padding: 0.3rem 0.8rem; border-radius: 6px; color: white; display: inline-block;">Populaire</span>
+                    <div class="price-amount">29€<span style="font-size: 0.5em; color: var(--text-secondary);">/mois</span></div>
+                    <div class="price-period">Le meilleur rapport qualité/prix</div>
+                    <ul class="price-features">
+                        <li>1000 requêtes/jour</li>
+                        <li>Tous les modèles IA</li>
+                        <li>Chat + API</li>
+                        <li>Support prioritaire</li>
+                        <li>Analytics détaillées</li>
+                    </ul>
+                </div>
+
+                <div class="pricing-card">
+                    <span class="price-label">Entreprise</span>
+                    <div class="price-amount">Sur devis</div>
+                    <div class="price-period">Pour les grosses utilisations</div>
+                    <ul class="price-features">
+                        <li>Accès illimité</li>
+                        <li>Modèles personnalisés</li>
+                        <li>API + Chat + Webhooks</li>
+                        <li>Support dédié 24/7</li>
+                        <li>SLA garanti 99.9%</li>
+                    </ul>
+                    <button class="cta-pricing" style="background: var(--surface-light); border: 2px solid var(--primary); color: var(--text-primary);" onclick="alert('Email: hello@rift.dev')">Contacter Sales</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Doc Preview -->
+        <section class="api-section">
+            <h2 class="section-title">Documentation API Puissante</h2>
+            <p class="section-subtitle">Intégrez RIFT en quelques minutes. Pas besoin d'être un sorcier.</p>
+            
+            <div class="api-grid">
+                <div class="api-content">
+                    <h3>🔗 REST API Complète</h3>
+                    <p>Une API simple, documentée et rapide. Pas de surprises. Pas de bugs weird qui te poursuivent à 2am.</p>
+                    
+                    <ul class="api-features-list">
+                        <li>
+                            <div class="api-icon">📡</div>
+                            <div>
+                                <strong>Endpoints Standard</strong>
+                                <p style="color: var(--text-secondary); margin-top: 0.3rem;">POST /chat, GET /status, et plus</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="api-icon">🔑</div>
+                            <div>
+                                <strong>Auth Simple</strong>
+                                <p style="color: var(--text-secondary); margin-top: 0.3rem;">API Keys ou OAuth2. Ton choix.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="api-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="#10a37f"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+                            <div>
+                                <strong>Ultra Rapide</strong>
+                                <p style="color: var(--text-secondary); margin-top: 0.3rem;">Latence ~100ms. Pas de lag.</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="api-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="#6366f1"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg></div>
+                            <div>
+                                <strong>Rate Limits Généreux</strong>
+                                <p style="color: var(--text-secondary); margin-top: 0.3rem;">10k req/min pour Pro. C'est bon.</p>
+                            </div>
+                        </li>
+                    </ul>
+                    
+                    <a href="api.html" class="api-link-btn">→ Voir la Documentation Complète</a>
+                </div>
+
+                <div>
+                    <div class="api-code-example">
+<span style="color: var(--accent);">import</span> requests
+
+response = requests.post(
+    <span style="color: var(--warning);">'https://api.rift.dev/v1/chat'</span>,
+    headers=&#123;
+        <span style="color: var(--warning);">'Authorization'</span>: <span style="color: var(--warning);">'Bearer YOUR_KEY'</span>
+    &#125;,
+    json=&#123;
+        <span style="color: var(--warning);">'message'</span>: <span style="color: var(--warning);">'Analyse ce texte'</span>,
+        <span style="color: var(--warning);">'model'</span>: <span style="color: var(--warning);">'auto'</span>  <span style="color: var(--text-secondary);">// RIFT choisit la meilleure IA</span>
+    &#125;
+)
+
+print(response.json())
+<span style="color: var(--text-secondary);">// &#123; "response": "...", "model_used": "GPT-4", "cost": 0.15 &#125;</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="social-links">
+            <a href="#" class="social-link">𝕏</a>
+            <a href="#" class="social-link">Ln</a>
+            <a href="#" class="social-link">▶</a>
+        </div>
+        <p>&copy; 2026 RIFT. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        // TODO: refactor ce madness en micro-composants réutilisables
+        // mais ça marche pour MVP ¯\_(ツ)_/¯
+        function createHeroParticles() {
+            const container = document.getElementById('heroParticles');
+            const particleCount = 100; // 100 was overkill, tried 50, but looks cheap. staying with 100.
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                // spreader aléatoire pour pas que ça fasse "grille régulière" (bad UX)
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // scroll event - classique mais ça marche
+        // NOTE: debouncer peut-être? Pour l'instant c'est smooth assez
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            const scrollThreshold = 50;
+            if (window.pageYOffset > scrollThreshold) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        function updateHomePlanIndicator() {
+            const plan = localStorage.getItem('rift_selected_plan') || 'free';
+            const code = localStorage.getItem('rift_activation_code');
+            const planIndicator = document.getElementById('homePlanIndicator');
+            const planText = document.getElementById('homePlanText');
+            
+            if (!planIndicator || !planText) return;
+            
+            planText.textContent = plan.toUpperCase();
+            
+            // Style selon le plan
+            const styles = {
+                free: 'background: rgba(156, 163, 175, 0.2); border: 1px solid rgba(156, 163, 175, 0.3); color: #9ca3af;',
+                pro: 'background: rgba(16, 163, 127, 0.2); border: 1px solid rgba(16, 163, 127, 0.3); color: #10b981;',
+                enterprise: 'background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2)); border: 1px solid rgba(139, 92, 246, 0.3); color: #8b5cf6;'
+            };
+            
+            planIndicator.style.cssText = `padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; ${styles[plan] || styles.free}`;
+            
+            // Ajouter l'info de code si présent
+            if (code) {
+                planText.textContent = `${plan.toUpperCase()} 🔑`;
+            }
+        }
+
+        // Initialisation principale
+        document.addEventListener('DOMContentLoaded', () => {
+            createHeroParticles();
+            updateHomePlanIndicator(); // Mettre à jour l'indicateur de plan
+            // Petit easter egg pour les vrais devs
+            console.log('%c🚀 RIFT - Routeur IA prêt', 'color: #10a37f; font-size: 16px; font-weight: bold;');
+            console.log('Tu cherches un job? Regarde pas le console, code plutôt');
+        });
+
+        function toggleMobileMenu() {
+            const btn = document.querySelector('.hamburger-btn');
+            const menu = document.getElementById('mobileMenu');
+            btn.classList.toggle('active');
+            menu.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            const btn = document.querySelector('.hamburger-btn');
+            const menu = document.getElementById('mobileMenu');
+            btn.classList.remove('active');
+            menu.classList.remove('active');
+        }
+    </script>
+</body>
+</html>

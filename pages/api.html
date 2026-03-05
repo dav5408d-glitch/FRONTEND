@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIFT - API Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10a37f;
+            --secondary: #6366f1;
+            --accent: #f59e0b;
+            --background: #000000;
+            --surface: #111111;
+            --surface-light: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --border: #2a2a2a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: inline-block;
+            position: relative;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+            letter-spacing: 0.1em;
+        }
+        .beta-badge {
+            position: absolute;
+            top: -8px;
+            right: -20px;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            color: white;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        main {
+            margin-top: 100px;
+            min-height: 100vh;
+        }
+
+        .hero {
+            padding: 6rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--background), var(--surface-light));
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .api-docs {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .doc-section {
+            margin-bottom: 4rem;
+        }
+
+        .doc-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+
+        .endpoint-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .endpoint-url {
+            font-family: monospace;
+            font-size: 1.1rem;
+            background: var(--background);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .code-block {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .code-header {
+            background: var(--surface-light);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-language {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        pre {
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: monospace;
+            color: var(--text-primary);
+        }
+
+        .params-table {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .params-table th,
+        .params-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .params-table th {
+            background: var(--surface-light);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .params-table td {
+            color: var(--text-secondary);
+        }
+
+        .params-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        footer {
+            padding: 3rem 2rem;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .hamburger-btn {
+            display: none;
+            flex-direction: column;
+            gap: 0.4rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .hamburger-btn span {
+            width: 25px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(10px, 10px);
+        }
+
+        .hamburger-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .mobile-menu a:hover {
+            background: rgba(16, 163, 127, 0.1);
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            header { position: relative; }
+            .hamburger-btn { display: flex; }
+            .nav-links { display: none !important; }
+            nav { flex-direction: column; padding: 1rem; }
+            main { margin-top: 0; padding: 1rem; }
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.4rem; }
+            h3 { font-size: 1.1rem; }
+            .endpoint-card { padding: 1.5rem; }
+            .params-table { font-size: 0.9rem; }
+            code { font-size: 0.8rem; }
+            section { padding: 2rem 1rem; }
+        }
+        @media (max-width: 480px) {
+            nav { padding: 0.75rem; }
+            main { padding: 0.75rem; }
+            h1 { font-size: 1.4rem; }
+            h2 { font-size: 1.2rem; }
+            .endpoint-card { padding: 1rem; }
+            .params-table { font-size: 0.8rem; }
+            code { font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="home.html" class="logo">RIFT<span class="beta-badge">BETA</span></a>
+                <button class="hamburger-btn" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <ul class="nav-links">
+                <li><a href="chat.html" class="nav-link">Chat</a></li>
+                <li><a href="api.html" class="nav-link">API</a></li>
+                <li><a href="auth.html" class="nav-link">Auth</a></li>
+            </ul>
+        </nav>
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="chat.html" onclick="closeMobileMenu()">Chat</a>
+            <a href="api.html" onclick="closeMobileMenu()">API</a>
+            <a href="auth.html" onclick="closeMobileMenu()">Auth</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>API RIFT</h1>
+            <p class="subtitle">Intégrez l'intelligence artificielle avancée dans vos applications</p>
+        </section>
+
+        <div class="api-docs">
+            <!-- Chat Completions -->
+            <section class="doc-section">
+                <h2>Chat Completions</h2>
+                
+                <div class="endpoint-card">
+                    <div class="endpoint-method">POST</div>
+                    <div class="endpoint-url">/api/ollama/generate</div>
+                    
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Créez une réponse de chat avec les modèles d'IA disponibles.</p>
+                    
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Paramètres</h3>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>Paramètre</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>model</code></td>
+                                <td>string</td>
+                                <td>ID du modèle (mistral:latest, llama3:latest)</td>
+                            </tr>
+                            <tr>
+                                <td><code>prompt</code></td>
+                                <td>string</td>
+                                <td>Message à traiter par l'IA</td>
+                            </tr>
+                            <tr>
+                                <td><code>stream</code></td>
+                                <td>boolean</td>
+                                <td>Flux de réponse (false pour réponse complète)</td>
+                            </tr>
+                            <tr>
+                                <td><code>options</code></td>
+                                <td>object</td>
+                                <td>Paramètres du modèle (temperature, max_tokens, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td><code>messages</code></td>
+                                <td>array</td>
+                                <td>Liste des messages dans la conversation</td>
+                            </tr>
+                            <tr>
+                                <td><code>max_tokens</code></td>
+                                <td>integer</td>
+                                <td>Nombre maximum de tokens (optionnel, max: 4096)</td>
+                            </tr>
+                            <tr>
+                                <td><code>temperature</code></td>
+                                <td>float</td>
+                                <td>Créativité: 0.0 à 2.0 (défaut: 1.0)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Exemple de requête</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">cURL</span>
+                        </div>
+                        <pre><code>curl -X POST "http://localhost:3000/api/ollama/generate" \
+  -H "Content-Type: application/json" \
+  -d '{\n    "model": "mistral:latest",\n    "prompt": "Bonjour!",\n    "stream": false,\n    "options": {\n      "temperature": 0.7,\n      "max_tokens": 500\n    }\n  }'</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Ollama Integration -->
+            <section class="doc-section">
+                <h2>Ollama Integration</h2>
+                
+                <div class="endpoint-card">
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">RIFT supporte nativement Ollama pour les modèles locaux. Les requêtes sont automatiquement routées vers le meilleur modèle disponible.</p>
+                    
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Modèles Ollama supportés</h3>
+                    <ul style="margin-left: 2rem; margin-bottom: 1.5rem; color: var(--text-secondary);">
+                        <li>Mixtral 7B</li>
+                        <li>Llama 2</li>
+                        <li>Neural Chat</li>
+                        <li>Mistral</li>
+                    </ul>
+                    
+                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Installation Ollama</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">bash</span>
+                        </div>
+                        <pre><code># Installer Ollama
+curl https://ollama.ai/install.sh | sh
+
+# Lancer le serveur Ollama
+ollama serve
+
+# Dans un autre terminal, télécharger un modèle
+ollama pull mixtral:7b
+
+# Vérifier les modèles disponibles
+curl http://localhost:11434/api/tags</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Handling -->
+            <section class="doc-section">
+                <h2>Gestion des Erreurs</h2>
+                
+                <div class="endpoint-card">
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>400</code></td>
+                                <td>Requête invalide</td>
+                            </tr>
+                            <tr>
+                                <td><code>401</code></td>
+                                <td>Authentification échouée</td>
+                            </tr>
+                            <tr>
+                                <td><code>429</code></td>
+                                <td>Trop de requêtes</td>
+                            </tr>
+                            <tr>
+                                <td><code>500</code></td>
+                                <td>Erreur serveur</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 RIFT. Tous droits réservés.</p>
+    </footer>
+    <script>
+        function toggleMobileMenu() {
+            const btn = document.querySelector('.hamburger-btn');
+            const menu = document.getElementById('mobileMenu');
+            btn.classList.toggle('active');
+            menu.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            const btn = document.querySelector('.hamburger-btn');
+            const menu = document.getElementById('mobileMenu');
+            btn.classList.remove('active');
+            menu.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
